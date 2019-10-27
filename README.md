@@ -52,4 +52,4 @@ ARGS:
 
 The project are [MIT licensed](LICENSE), except for the image.
 
-All art assets used are for demonstration and educational purposes. All rights are reserved to their original owners. If you (as a person or a company) own the art and do not wish it to be associated with this project, please contact me at **andra.antariksa [at] gmail.com** and we will gladly take it down.
+All art assets used are for demonstration and educational purposes. All rights are reserved to their original owners. If you (as a person or a company) own the art and do not wish it to be associated with this project, please contact me at **andra.antariksa [at] gmail.com** and I will gladly take it down.
