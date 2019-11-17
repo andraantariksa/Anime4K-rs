@@ -32,7 +32,7 @@ fn main() {
             Arg::with_name("iteration")
                 .short("i")
                 .long("iteration")
-                .default_value("2")
+                .default_value("1")
                 .help("Sets how many the iteration to do"),
         )
         .arg(
@@ -55,23 +55,47 @@ fn main() {
     let output_filename = matches
         .value_of("OUTPUT")
         .expect("Error: Please specify input and output png files.");
-    let scale = matches.value_of("scale").unwrap().parse::<f64>().expect("Error on parsing scale to f64");
-    let iteration = matches.value_of("iteration").unwrap().parse::<u8>().expect("Error on parsing iteration to u8");
-    let push_color_strength = matches.value_of("push-color-strength").unwrap().parse::<f64>().expect("Error on parsing push-color-strength to f64");
-    let push_gradient_strength = matches.value_of("push-gradient-strength").unwrap().parse::<f64>().expect("Error on parsing push-gradient-strength to f64");
+    let scale = matches
+        .value_of("scale")
+        .unwrap()
+        .parse::<f64>()
+        .expect("Error on parsing scale to f64");
+    let iteration = matches
+        .value_of("iteration")
+        .unwrap()
+        .parse::<u8>()
+        .expect("Error on parsing iteration to u8");
+    let push_color_strength = matches
+        .value_of("push-color-strength")
+        .unwrap()
+        .parse::<f64>()
+        .expect("Error on parsing push-color-strength to f64");
+    let push_gradient_strength = matches
+        .value_of("push-gradient-strength")
+        .unwrap()
+        .parse::<f64>()
+        .expect("Error on parsing push-gradient-strength to f64");
 
     let image = image::open(&input_filename).expect("Can't open image.");
 
     let mut kernel_instance = image_kernel::ImageKernel::from_image(image);
     kernel_instance.scale(
-        kernel_instance.width() * scale as u32,
-        kernel_instance.height() * scale as u32,
+        (kernel_instance.width() as f64 * scale) as u32,
+        (kernel_instance.height() as f64 * scale) as u32,
     );
     for _ in 0..iteration {
         kernel_instance.compute_luminance();
-        kernel_instance.push_color(image_kernel::clamp((push_color_strength * 255.0) as u16, 0, 0xFFFF));
+        kernel_instance.push_color(image_kernel::clamp(
+            (push_color_strength * 255.0) as u16,
+            0,
+            0xFFFF,
+        ));
         kernel_instance.compute_gradient();
-        kernel_instance.push_gradient(image_kernel::clamp((push_gradient_strength * 255.0) as u16, 0, 0xFFFF));
+        kernel_instance.push_gradient(image_kernel::clamp(
+            (push_gradient_strength * 255.0) as u16,
+            0,
+            0xFFFF,
+        ));
     }
     kernel_instance
         .save(output_filename)
