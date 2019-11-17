@@ -38,14 +38,18 @@ ARGS:
 
 ## Preview
 
+You can take a look on [assets](assets/) for more preview
+
 ### Before
 
-![Bercouli before](assets/in.png)
+![Scenery before](assets/scenery-in.png)
+![Bercouli before](assets/people-in.png)
 <img alt="Bercouli eye before" src="assets/eye-in.png" width="300" height="300" />
 
 ### After
 
-![Bercouli after](assets/out.png)
+![Scenery before](assets/scenery-in.png)
+![Bercouli after](assets/people-out.png)
 <img alt="Bercouli eye after" src="assets/eye-out.png" width="300" height="300" />
 
 ## LICENSE
