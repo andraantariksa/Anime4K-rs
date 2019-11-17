@@ -5,6 +5,8 @@ extern crate raster;
 use clap::{App, Arg};
 
 mod image_kernel;
+#[cfg(test)]
+mod test;
 
 fn main() {
     let matches = App::new("Anime4K-rs")
