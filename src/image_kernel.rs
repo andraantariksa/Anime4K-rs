@@ -105,8 +105,8 @@ impl ImageKernel {
     }
 
     pub fn compute_luminance(&mut self) {
-        for y in 0..self.image.height() {
-            for x in 0..self.image.width() {
+        for y in 0..self.image.height() - 1 {
+            for x in 0..self.image.width() - 1 {
                 let pixel = self.image.get_pixel_mut(x, y);
                 let (r, g, b, _) = extract_pixel_rgba(&pixel);
                 let brightness = get_brightness(r, g, b);
@@ -172,8 +172,8 @@ impl ImageKernel {
     pub fn push_color(&mut self, strength: u16) {
         let mut temp_image =
             image::DynamicImage::new_rgba8(self.image.width(), self.image.height()).to_rgba();
-        for y in 0..self.image.height() {
-            for x in 0..self.image.width() {
+        for y in 0..self.image.height() - 1 {
+            for x in 0..self.image.width() - 1 {
                 /*
                  * Kernel defination:
                  * --------------
@@ -297,8 +297,8 @@ impl ImageKernel {
     pub fn push_gradient(&mut self, strength: u16) {
         let mut temp_image =
             image::DynamicImage::new_rgba8(self.image.width(), self.image.height()).to_rgba();
-        for y in 0..self.image.height() {
-            for x in 0..self.image.width() {
+        for y in 0..self.image.height() - 1 {
+            for x in 0..self.image.width() - 1 {
                 /*
                  * Kernel defination:
                  * --------------
