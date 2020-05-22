@@ -10,21 +10,23 @@ pub fn clamp<T: PartialOrd>(val: T, min: T, max: T) -> T {
     }
 }
 
-pub fn extract_pixel_rgba(pixel: &image::Rgba<u8>) -> (u8, u8, u8, u8) {
+#[inline]
+pub fn extract_pixel_rgba(pixel: image::Rgba<u8>) -> (u8, u8, u8, u8) {
     (pixel[0], pixel[1], pixel[2], pixel[3])
 }
 
 // https://stackoverflow.com/a/596241/3894179
+#[inline]
 pub fn get_brightness(r: u8, g: u8, b: u8) -> u32 {
     (r as u32 + r as u32 + g as u32 + g as u32 + g as u32 + b as u32) / 6
 }
 
 pub fn get_largest_alpha_avg(
-    cc: &image::Rgba<u8>,
-    lightest_color: &image::Rgba<u8>,
-    a: &image::Rgba<u8>,
-    b: &image::Rgba<u8>,
-    c: &image::Rgba<u8>,
+    cc: image::Rgba<u8>,
+    lightest_color: image::Rgba<u8>,
+    a: image::Rgba<u8>,
+    b: image::Rgba<u8>,
+    c: image::Rgba<u8>,
     strength: u16,
 ) -> image::Rgba<u8> {
     let new_color_r = ((cc[0] as u32 * (0xFF - strength) as u32
@@ -42,18 +44,18 @@ pub fn get_largest_alpha_avg(
 
     let new_color = image::Rgba::<u8>([new_color_r, new_color_g, new_color_b, new_color_a]);
 
-    return if new_color[3] > lightest_color[3] {
+    if new_color[3] > lightest_color[3] {
         new_color
     } else {
-        *lightest_color
-    };
+        lightest_color
+    }
 }
 
 pub fn get_alpha_avg(
-    cc: &image::Rgba<u8>,
-    a: &image::Rgba<u8>,
-    b: &image::Rgba<u8>,
-    c: &image::Rgba<u8>,
+    cc: image::Rgba<u8>,
+    a: image::Rgba<u8>,
+    b: image::Rgba<u8>,
+    c: image::Rgba<u8>,
     strength: u16,
 ) -> image::Rgba<u8> {
     let new_color_r = ((cc[0] as u32 * (0xFF - strength) as u32
@@ -105,10 +107,10 @@ impl ImageKernel {
     }
 
     pub fn compute_luminance(&mut self) {
-        for y in 0..self.image.height() - 1 {
-            for x in 0..self.image.width() - 1 {
+        for y in 0..self.image.height() {
+            for x in 0..self.image.width() {
                 let pixel = self.image.get_pixel_mut(x, y);
-                let (r, g, b, _) = extract_pixel_rgba(&pixel);
+                let (r, g, b, _) = extract_pixel_rgba(*pixel);
                 let brightness = get_brightness(r, g, b);
                 let luminance_value = clamp(brightness, 0, 0xFF);
 
@@ -172,8 +174,8 @@ impl ImageKernel {
     pub fn push_color(&mut self, strength: u16) {
         let mut temp_image =
             image::DynamicImage::new_rgba8(self.image.width(), self.image.height()).to_rgba();
-        for y in 0..self.image.height() - 1 {
-            for x in 0..self.image.width() - 1 {
+        for y in 0..self.image.height() {
+            for x in 0..self.image.width() {
                 /*
                  * Kernel defination:
                  * --------------
@@ -200,29 +202,29 @@ impl ImageKernel {
                 }
 
                 // Top column
-                let tl = self
+                let tl = *self
                     .image
                     .get_pixel((x as i32 + x_l) as u32, (y as i32 + y_t) as u32);
-                let tc = self.image.get_pixel(x, (y as i32 + y_t) as u32);
-                let tr = self
+                let tc = *self.image.get_pixel(x, (y as i32 + y_t) as u32);
+                let tr = *self
                     .image
                     .get_pixel((x as i32 + x_r) as u32, (y as i32 + y_t) as u32);
 
                 // Middle column
-                let ml = self.image.get_pixel((x as i32 + x_l) as u32, y);
-                let mc = self.image.get_pixel(x, y);
-                let mr = self.image.get_pixel((x as i32 + x_r) as u32, y);
+                let ml = *self.image.get_pixel((x as i32 + x_l) as u32, y);
+                let mc = *self.image.get_pixel(x, y);
+                let mr = *self.image.get_pixel((x as i32 + x_r) as u32, y);
 
                 // Bottom column
-                let bl = self
+                let bl = *self
                     .image
                     .get_pixel((x as i32 + x_l) as u32, (y as i32 + y_b) as u32);
-                let bc = self.image.get_pixel(x, (y as i32 + y_b) as u32);
-                let br = self
+                let bc = *self.image.get_pixel(x, (y as i32 + y_b) as u32);
+                let br = *self
                     .image
                     .get_pixel((x as i32 + x_r) as u32, (y as i32 + y_b) as u32);
 
-                let mut lightest_color = mc.clone();
+                let mut lightest_color = mc;
 
                 // Kernel 0 and 4
                 let mut max_dark = max(bl[3], max(bc[3], br[3]));
@@ -230,13 +232,13 @@ impl ImageKernel {
 
                 if min_light > mc[3] && min_light > max_dark {
                     lightest_color =
-                        get_largest_alpha_avg(mc, &lightest_color, tl, tc, tr, strength);
+                        get_largest_alpha_avg(mc, lightest_color, tl, tc, tr, strength);
                 } else {
                     max_dark = max(tl[3], max(tc[3], tr[3]));
                     min_light = min(br[3], min(bc[3], bl[3]));
                     if min_light > mc[3] && min_light > max_dark {
                         lightest_color =
-                            get_largest_alpha_avg(mc, &lightest_color, br, bc, bl, strength);
+                            get_largest_alpha_avg(mc, lightest_color, br, bc, bl, strength);
                     }
                 }
 
@@ -246,13 +248,13 @@ impl ImageKernel {
 
                 if min_light > max_dark {
                     lightest_color =
-                        get_largest_alpha_avg(mc, &lightest_color, mr, tc, tr, strength);
+                        get_largest_alpha_avg(mc, lightest_color, mr, tc, tr, strength);
                 } else {
                     max_dark = max(mc[3], max(mr[3], tc[3]));
                     min_light = min(bl[3], min(ml[3], bc[3]));
                     if min_light > max_dark {
                         lightest_color =
-                            get_largest_alpha_avg(mc, &lightest_color, bl, ml, bc, strength);
+                            get_largest_alpha_avg(mc, lightest_color, bl, ml, bc, strength);
                     }
                 }
 
@@ -262,13 +264,13 @@ impl ImageKernel {
 
                 if min_light > mc[3] && min_light > max_dark {
                     lightest_color =
-                        get_largest_alpha_avg(mc, &lightest_color, mr, br, tr, strength);
+                        get_largest_alpha_avg(mc, lightest_color, mr, br, tr, strength);
                 } else {
                     max_dark = max(mr[3], max(tr[3], br[3]));
                     min_light = min(ml[3], min(tl[3], bl[3]));
                     if min_light > mc[3] && min_light > max_dark {
                         lightest_color =
-                            get_largest_alpha_avg(mc, &lightest_color, ml, tl, bl, strength);
+                            get_largest_alpha_avg(mc, lightest_color, ml, tl, bl, strength);
                     }
                 }
 
@@ -278,13 +280,13 @@ impl ImageKernel {
 
                 if min_light > max_dark {
                     lightest_color =
-                        get_largest_alpha_avg(mc, &lightest_color, mr, br, bc, strength);
+                        get_largest_alpha_avg(mc, lightest_color, mr, br, bc, strength);
                 } else {
                     max_dark = max(mc[3], max(mr[3], bc[3]));
                     min_light = min(tc[3], min(ml[3], tl[3]));
                     if min_light > max_dark {
                         lightest_color =
-                            get_largest_alpha_avg(mc, &lightest_color, tc, ml, tl, strength);
+                            get_largest_alpha_avg(mc, lightest_color, tc, ml, tl, strength);
                     }
                 }
 
@@ -297,8 +299,8 @@ impl ImageKernel {
     pub fn push_gradient(&mut self, strength: u16) {
         let mut temp_image =
             image::DynamicImage::new_rgba8(self.image.width(), self.image.height()).to_rgba();
-        for y in 0..self.image.height() - 1 {
-            for x in 0..self.image.width() - 1 {
+        for y in 0..self.image.height() {
+            for x in 0..self.image.width() {
                 /*
                  * Kernel defination:
                  * --------------
@@ -325,29 +327,29 @@ impl ImageKernel {
                 }
 
                 // Top column
-                let tl = self
+                let tl = *self
                     .image
                     .get_pixel((x as i32 + x_l) as u32, (y as i32 + y_t) as u32);
-                let tc = self.image.get_pixel(x, (y as i32 + y_t) as u32);
-                let tr = self
+                let tc = *self.image.get_pixel(x, (y as i32 + y_t) as u32);
+                let tr = *self
                     .image
                     .get_pixel((x as i32 + x_r) as u32, (y as i32 + y_t) as u32);
 
                 // Middle column
-                let ml = self.image.get_pixel((x as i32 + x_l) as u32, y);
-                let mc = self.image.get_pixel(x, y);
-                let mr = self.image.get_pixel((x as i32 + x_r) as u32, y);
+                let ml = *self.image.get_pixel((x as i32 + x_l) as u32, y);
+                let mc = *self.image.get_pixel(x, y);
+                let mr = *self.image.get_pixel((x as i32 + x_r) as u32, y);
 
                 // Bottom column
-                let bl = self
+                let bl = *self
                     .image
                     .get_pixel((x as i32 + x_l) as u32, (y as i32 + y_b) as u32);
-                let bc = self.image.get_pixel(x, (y as i32 + y_b) as u32);
-                let br = self
+                let bc = *self.image.get_pixel(x, (y as i32 + y_b) as u32);
+                let br = *self
                     .image
                     .get_pixel((x as i32 + x_r) as u32, (y as i32 + y_b) as u32);
 
-                let mut lightest_color = mc.clone();
+                let mut lightest_color = mc;
 
                 // Kernel 0 and 4
                 let mut max_dark = max(bl[3], max(bc[3], br[3]));
