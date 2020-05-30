@@ -1,0 +1,101 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [linux, macos, win-msvc]
+        include:
+          - build: linux
+            os: ubuntu-latest
+            rust: stable
+          - build: macos
+            os: macOS-latest
+            rust: stable
+          - build: win-msvc
+            os: windows-latest
+            rust: stable
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+          profile: minimal
+      - name: Build release
+        run: cargo build --release --verbose
+      
+      - name: Upload windows artefact
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: anime4k-windows
+          path: target/release/anime4k.exe
+      
+      - name: Upload macos artefact
+        if: ${{ matrix.os == 'macOS-latest' }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: anime4k-macos
+          path: target/release/anime4k
+      
+      - name: Upload linux artefact
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: anime4k-linux
+          path: target/release/anime4k
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release directory
+        run: mkdir release/
+
+      - name: Download linux artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: anime4k-linux
+          path: .
+      - name: Zip linux artefact
+        uses: montudor/action-zip@v0.1.0
+        with:
+          args: zip release/anime4k-linux.zip anime4k
+      
+      - name: Download macos artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: anime4k-macos
+          path: .
+      - name: Zip macos artefact
+        uses: montudor/action-zip@v0.1.0
+        with:
+          args: zip release/anime4k-macos.zip anime4k
+      
+      - name: Download windows artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: anime4k-windows
+          path: .
+      - name: Zip windows artefact
+        uses: montudor/action-zip@v0.1.0
+        with:
+          args: zip release/anime4k-windows.zip anime4k.exe
+      
+      - name: Release artifact
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          tag: v0.1
+          artifacts: release/*
+          token: ${{ secrets.ACCESS_TOKEN }}
