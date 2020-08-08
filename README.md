@@ -29,7 +29,7 @@ OPTIONS:
     -i, --iteration <iteration>           Sets how many the iteration to do [default: 2]
         --pcs <push-color-strength>       Sets the push color strength [default: 0]
         --pgs <push-gradient-strength>    Sets push gradient strength [default: 1]
-    -s, --scale <scale>                   Sets the input file to use [default: 2]
+    -s, --scale <scale>                   Sets the scaling factor [default: 2]
 
 ARGS:
     <INPUT>     Sets the input file to use

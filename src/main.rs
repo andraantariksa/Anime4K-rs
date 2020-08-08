@@ -28,7 +28,7 @@ fn main() {
                 .short("s")
                 .long("scale")
                 .default_value("2")
-                .help("Sets the input file to use"),
+                .help("Sets the scaling factor"),
         )
         .arg(
             Arg::with_name("iteration")
